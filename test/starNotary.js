@@ -22,6 +22,12 @@ contract('StarNotary', async (accs) => {
         await instance.claimStar({from: secondUser})
         assert.equal(await instance.starOwner.call(), secondUser)
     })
+
+    it('can change name', async () => {
+        let instance = await StarNotary.deployed();
+        await instance.changeName('mystar');
+        assert.equal(await instance.starName.call(), "mystar");
+    })
 });
 
 
