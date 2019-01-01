@@ -6,23 +6,40 @@ import { default as Web3 } from 'web3'
 import { default as contract } from 'truffle-contract'
 
 // Import our contract artifacts and turn them into usable abstractions.
-import metaCoinArtifact from '../../build/contracts/MetaCoin.json'
+import StarNotaryArtifact from '../../build/contracts/StarNotary.json'
 
-// MetaCoin is our usable abstraction, which we'll use through the code below.
-const MetaCoin = contract(metaCoinArtifact)
+// StarNotary is our usable abstraction, which we'll use through the code below.
+const StarNotary = contract(StarNotaryArtifact)
 
-// The following code is simple to show off interacting with your contracts.
-// As your needs grow you will likely need to change its form and structure.
-// For application bootstrapping, check out window.addEventListener below.
 let accounts
 let account
 
-const App = {
-  start: function () {
-    const self = this
+const starName = async () => {
+    const instance = await StarNotary.deployed();
+    const response = await instance.starName.call();
+    const owner = document.getElementById("name");
+    owner.innerHTML = response;
+}
 
-    // Bootstrap the MetaCoin abstraction for Use.
-    MetaCoin.setProvider(web3.currentProvider)
+const starOwner = async () => {
+    const instance = await StarNotary.deployed();
+    const response = await instance.starOwner.call();
+    const owner = document.getElementById("owner");
+    owner.innerHTML = response;
+}
+
+const claimStar = async () => {
+    const instance = await StarNotary.deployed();
+    await instance.claimStar({from: account});
+    const response = await instance.starOwner.call();
+    App.setStatus("New Star Owner is " + account + ".");
+}
+
+// Defining an object App
+const App = {
+    start: function () {
+
+        StarNotary.setProvider(web3.currentProvider)
 
     // Get the initial account balance so it can be displayed.
     web3.eth.getAccounts(function (err, accs) {
@@ -39,7 +56,6 @@ const App = {
       accounts = accs
       account = accounts[0]
 
-      self.refreshBalance()
     })
   },
 
@@ -48,42 +64,18 @@ const App = {
     status.innerHTML = message
   },
 
-  refreshBalance: function () {
-    const self = this
+    starName: function () {
+        starName();
+    },
 
-    let meta
-    MetaCoin.deployed().then(function (instance) {
-      meta = instance
-      return meta.getBalance.call(account, { from: account })
-    }).then(function (value) {
-      const balanceElement = document.getElementById('balance')
-      balanceElement.innerHTML = value.valueOf()
-    }).catch(function (e) {
-      console.log(e)
-      self.setStatus('Error getting balance; see log.')
-    })
-  },
+    starOwner: function () {
+        starOwner();
+    },
 
-  sendCoin: function () {
-    const self = this
+    claimStar: function () {
+        claimStar();
+    },
 
-    const amount = parseInt(document.getElementById('amount').value)
-    const receiver = document.getElementById('receiver').value
-
-    this.setStatus('Initiating transaction... (please wait)')
-
-    let meta
-    MetaCoin.deployed().then(function (instance) {
-      meta = instance
-      return meta.sendCoin(receiver, amount, { from: account })
-    }).then(function () {
-      self.setStatus('Transaction complete!')
-      self.refreshBalance()
-    }).catch(function (e) {
-      console.log(e)
-      self.setStatus('Error sending coin; see log.')
-    })
-  }
 }
 
 window.App = App
